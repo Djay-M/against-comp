@@ -19,7 +19,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages cp ./static/favicon.ico public/ -d build"
+    "deploy": "gh-pages cp ./favicon.ico public/ -d build"
   },
   "eslintConfig": {
     "extends": [
