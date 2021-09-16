@@ -2,14 +2,62 @@ import React, { Component } from 'react'
 import './TicTacToe.css'
 const _ = require('lodash');
 
+
+const boardSize = 3;
+const checkForWinner = (playload) => {
+    const {
+        boardSize,
+        targetId: updatedCell,
+        targetValue: updatedValue,
+        tableArray: tableData,
+        player,
+    } = playload
+    const [updatedRow, updatedCol] = updatedCell.split('*')
+
+    // check for the row values
+    // remove the keys whhich matches the updatedValue from the updated row
+    const rowMatched = _.isEmpty(_.omitBy(tableData[updatedRow], (value) => { return value === updatedValue }));
+    if(rowMatched){
+        console.log("player ===> ", player)
+        return player;
+    }
+
+    let updatedColRangeValues = []
+    let updatedDiagonalRangeValues = []
+    let updatedAntiDiagonalRangeValues = []
+    let rowCounter = 0
+    let colCounter = 0
+
+    tableData.forEach(row => {
+
+        // check for the matching col values
+        row[`${rowCounter}*${updatedCol}`] === updatedValue && updatedColRangeValues.push(row[`${rowCounter}*${updatedCol}`]);
+
+        // check for the matching diagonal values
+        row[`${rowCounter}*${colCounter}`] === updatedValue && updatedDiagonalRangeValues.push(row[`${rowCounter}*${colCounter}`]);
+
+        rowCounter++
+        colCounter++
+
+    });
+    if(updatedColRangeValues.length === boardSize){
+        return player
+    }
+    console.log(updatedDiagonalRangeValues)
+    console.log(" =====> ", JSON.stringify(tableData))
+    
+    return false;
+}
+
 export default class TicTacToe extends Component {
     constructor(props) {
         super(props);
         this.state = {
             isAllCellfilled: false,
-            tableArray: this.createtableArray(3),
+            tableArray: this.createtableArray(boardSize),
             player1: true,
-            player2: false
+            player2: false,
+            winner: false,
         };
     }
 
@@ -20,17 +68,10 @@ export default class TicTacToe extends Component {
      */
     createtableArray = (size) => {
         const cellArray = []
-        for(var row=1; row<=size; row++){
-            const cellObj = {
-                trID: `${row}`
-            }
-            for(var col=1; col<=size; col++){
-                // cellObj[`${row} * ${col}`] = {
-                //     id: `${row} * ${col}`,
-                //     onChange: this.validateCellVal,
-                //     value: ""
-                // }
-                cellObj[`${row} * ${col}`] = ""
+        for(var row=0; row<size; row++){
+            const cellObj = {}
+            for(var col=0; col<size; col++){
+                cellObj[`${row}*${col}`] = ""
             }
             cellArray.push(cellObj)
         }
@@ -41,24 +82,24 @@ export default class TicTacToe extends Component {
         return (
             <table className="table">
                 <tbody>
-                    {dataArray.map((rowData) => {
-                        return this.createRows(rowData)
+                    {dataArray.map((rowData, index) => {
+                        return this.createRows(rowData, index)
                     })}
                 </tbody>
             </table>
         )
     }
 
-    createRows = (rowObj) => {
+    createRows = (rowObj, rowId) => {
         return (
-            <tr id={rowObj.trID}>
+            // rowId + 1 because the array starts from 0
+            <tr id={rowId}>
                 {
+                    // eslint-disable-next-line
                     Object.keys(rowObj).map(element => {
-                        if(element !== 'trID'){
-                            return <td id={element} className="cell" onChange={this.validateCellVal}>
-                                <input id={element} className="cell_input" value={rowObj[element]}></input>
-                            </td>
-                        }
+                        return <td id={element} className="cell" onChange={this.validateCellVal}>
+                            <input id={element} className="cell_input" value={rowObj[element]}></input>
+                        </td>
                     })
                 }
             </tr>
@@ -66,9 +107,13 @@ export default class TicTacToe extends Component {
     }
 
     getMessage = () => {
-        const {isAllCellfilled} = this.state;
-        if(isAllCellfilled){
-            return <h2>Game Over</h2>
+        const {isAllCellfilled, winner} = this.state;
+        if(isAllCellfilled || winner){
+            return (
+            <div>
+                <h2>Game Over </h2>
+                <h1>{winner ? `${winner} wins` : "It's Draw"}</h1>
+            </div>)
         }
         return  <h4 style={{ color: 'black'}}>{this.state.player1 ? "player 1" : "player 2"} 's Move </h4>
     }
@@ -78,23 +123,44 @@ export default class TicTacToe extends Component {
         const targetValue = data.target.value.toLowerCase();
         const targetId = data.target.id
         console.log(targetId)
-        let emptycells = []
-        if(targetValue === 'x' || targetValue === 'o'){
+        let emptycells = {}
+        if((player1 && targetValue === 'x') || (player2 && targetValue === 'o')){
+            // Logic for updating the cell value
             tableArray.forEach(row => {
-                if(row[targetId] || row[targetId] === "") {
-                    row[targetId] = targetValue.toUpperCase();
+                if(row[targetId] === "") {
+                    row[targetId] = targetValue;
                 }
-                const emptycellObj = _.pickBy(row, (keyValue) => {
-                    return keyValue === ""
-                })
-                !_.isEmpty(emptycellObj) && emptycells.push(emptycellObj)
+                emptycells = {
+                    ...emptycells,
+                    ..._.pickBy(row, (keyValue) => {
+                        return keyValue === ""
+                    })
+                }
+                
             });
+            const winner = Object.keys(emptycells).length <= 6 ? checkForWinner({
+                boardSize,
+                targetId,
+                targetValue,
+                tableArray,
+                player: player1 ? "player1" : "player2",
+            }) : false;
+
+            // console.log("winnner :::", winner)
+
+            // checkForWinner({ 
+            //     targetId,
+            //     targetValue,
+            //     tableArray,
+            //     player: player1 ? player1 : player2,
+            // })
 
             this.setState({
-                isAllCellfilled: emptycells.length === 0,
+                isAllCellfilled: Object.keys(emptycells).length === 0,
                 tableArray, 
                 player1: !player1,
                 player2: !player2,
+                winner
             })
         }
         // Need to thor error here 

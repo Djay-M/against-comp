@@ -11,11 +11,10 @@
 
 .button_div {
     margin-bottom: 50px;
-    margin-left: 50px; 
+    margin-left: 150px; 
     margin-right: auto;
 }
 .button_div > button {
-    /* background-color: blue; */
     border-radius: 5px;
     border: none;
 }
@@ -34,12 +33,13 @@
 }
 
 .cell_input {
+    font-size: larger;
     color: ivory;
-    font-weight: bolder;
+    font-weight:900;
     text-align: center;
     border: none;
     background-color: #282c34;
-    width: fit-content;
+    max-width: 150px;
     height: 150px;
 }
 
